@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html><!-- manifest="cache.appcache" 開啟Cache 功能-->
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></meta>
+        <!--jQuery-->
+        <script type="text/javascript" src="js/jquery-1.8.2.min.js"></script>
+		<!--json2-->
+		<script type="text/javascript" src="js/json2.min.js"></script>
+		<!--Google Map API v3-->
+		<script type="text/javascript"	src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDE9qxWxKreYH34oRyk2RCtM5-VqrauTPc&sensor=false"></script>
+		<!--jQuery mobile-->
+        <link rel="stylesheet" type="text/css" href="css/jquery.mobile-1.3.0.css"></link>
+        <script type="text/javascript" src="js/jquery.mobile-1.3.0.min.js"></script>
+        <!--Style-->
+        <style type="text/css">
+		body, html {
+		  height: 100%;
+		  width: 100%;
+		}
+		div#map_canvas {
+		  width: 100%; height: 300px;
+		}
+		#map_canvas img { max-width: none; }
+
+        </style>
+		<!--Test script-->
+		<script>
+		var areaPolygon=[];
+		var spots=[];
+		function insertPoint(point,Type){
+			var content;
+			if(Type=="spot"){
+				spots.push(point);
+			}else{
+				areaPolygon.push(point);
+			}
+		}
+		function deletePoint(index,Type){
+			var content;
+			if(Type=="spot"){
+				spots.splice(index,1);
+			}else{
+				areaPolygon.splice(index,1);
+			}
+		}
+		function ini(){
+			areaPolygon=[];
+			spots=[];
+
+ areaPolygon.push(new Point(25.0349120393757, 121.5126085281372));	
+ areaPolygon.push(new Point(25.03191797702558, 121.51453971862793));	
+ areaPolygon.push(new Point(25.032151283210304, 121.51556968688965));	
+ areaPolygon.push(new Point(25.034523204238038, 121.51505470275879));	
+
+
+
+// areaPolygon.push(new Point(25.0314513633252, 121.51488304138184));	
+// areaPolygon.push(new Point(25.029895971507845, 121.51552677154541));	
+// areaPolygon.push(new Point(25.029973741567, 121.51651382446289));	
+// areaPolygon.push(new Point(25.0314513633252, 121.51548385620117));	
+	
+			// areaPolygon.push(new Point(24.794663,120.972626));	
+			// areaPolygon.push(new Point(24.774987,120.985415));
+			// areaPolygon.push(new Point(24.769298,121.002753));
+			// areaPolygon.push(new Point(24.756458,121.020284));
+			// areaPolygon.push(new Point(24.772435,121.030369));
+			// areaPolygon.push(new Point(24.772435,121.030369));
+			// areaPolygon.push(new Point(24.77863,121.030734));	
+			// areaPolygon.push(new Point(24.781728,121.021636));	
+			// areaPolygon.push(new Point(24.78991,121.005757));	
+			// areaPolygon.push(new Point(24.789481,120.99992));		
+			// areaPolygon.push(new Point(24.782449,120.998161));
+			// areaPolygon.push(new Point(24.794663,120.972626));	
+
+			
+			spots.push(new Point(25.030168166499184, 121.51793003082275));
+			spots.push(new Point(25.033162271550825, 121.51458263397217));
+			spots.push(new Point(25.030362591123314, 121.5157413482666));
+			// spots.push(new Point(25.0574,121.5457));
+			// spots.push(new Point(25.0435,121.5178));
+			// spots.push(new Point(25.0571,121.5085));
+			refresh();
+		}
+		function refresh(){
+			map_initialize(areaPolygon,spots);
+			//清單
+			showPointList($('#spotList'),spots,"判斷點");
+			showPointList($('#areaList'),areaPolygon,"多邊形區域點");
+		}
+		function showPointList(div,points,name){
+			var html="";
+			if(points.length>0){
+				html+="<li data-role='list-divider'>"+name+"</li>";
+				for(var index=0;index<points.length;index++){
+					html+="<li>point"+(index+1)+":"+points[index].x+","+points[index].y+"<button data-inline='true' class='btnDelete' data-index='"+index+"'>delete</button></li>";
+				}
+			}
+			$(div).html(html);
+			//CSS需套用才能正確呈現
+			$(div).listview("refresh");
+			$('.btnDelete').button();
+		}
+		function Point(x,y){
+		    this.x=x;
+		    this.y=y;
+		}
+		function isPointInPoly(poly, pt){
+			for(var c = false, i = -1, l = poly.length, j = l - 1; ++i < l; j = i)
+				((poly[i].y <= pt.y && pt.y < poly[j].y) || (poly[j].y <= pt.y && pt.y < poly[i].y))
+				&& (pt.x < (poly[j].x - poly[i].x) * (pt.y - poly[i].y) / (poly[j].y - poly[i].y) + poly[i].x)
+				&& (c = !c);
+			return c;
+		}
+		function map_initialize(areaPolygon,spots) {
+			var myLatLng= new google.maps.LatLng(24.78991,121.005757);
+			if(spots.length!=0){
+			myLatLng = new google.maps.LatLng(spots[0].x,spots[0].y);
+			}
+			var mapOptions = {
+			zoom: 12,
+			center: myLatLng,
+			mapTypeId: google.maps.MapTypeId.TERRAIN
+			};
+
+			var map = new google.maps.Map(document.getElementById("map_canvas"),
+			  mapOptions);
+			var areasLine = [];
+			  	
+			  	for (var i = areaPolygon.length - 1; i >= 0; i--) {
+					areasLine.push(new google.maps.LatLng(areaPolygon[i].x,areaPolygon[i].y));
+				};
+				//寫入第一個點使它成為簡單多邊形
+				if(areaPolygon.length>2){
+					areasLine.push(new google.maps.LatLng(areaPolygon[areaPolygon.length-1].x,areaPolygon[areaPolygon.length-1].y));
+				}
+			  	for (var i =0;i< spots.length;i++) {
+				  	  var coordinate = new google.maps.LatLng(spots[i].x,spots[i].y);
+					  var marker = new google.maps.Marker({
+				      position: coordinate,
+				      map: map,
+				      title:"spots:"+(i+1)+",是否在區域內:"+(isPointInPoly(areaPolygon,spots[i])?"是":"否")
+				  }); 
+				};
+				var area = new google.maps.Polyline({
+				path: areasLine,
+				strokeColor: "#FF0000",
+				strokeOpacity: 1.0,
+				strokeWeight: 2
+				});
+				area.setMap(map);
+			google.maps.event.addListener(map,'mousemove',function(event)
+			{
+				center = event.latLng;  
+				$('#txtLat').val(center.lat());
+				$('#txtLong').val(center.lng());	
+			});
+			google.maps.event.addListener(map,'click',function(event)
+			{
+				center = event.latLng;  
+				$('#txtLatLongOnClicked').val(center.lat() + ', ' + center.lng());
+			});
+		}
+		$(document).on('pageini','#index',function(){
+		});
+		$(document).on('pageshow','#index',function(){
+			refresh();
+			$('#areaList').on('click','.btnDelete',function(){
+				var index=$(this).data("index");
+				areaPolygon.splice(index,1);
+				 refresh();
+			});
+			$('#spotList').on('click','.btnDelete',function(){
+				var index=$(this).data("index");
+				spots.splice(index,1);
+				 refresh();
+			});
+		});
+		$(document).on('pageshow','#popupAddAreaPoint',function(){
+				$(this).find('#txtLatitudeLongitude').val('');
+		});
+		$(document).on('pageshow','#popupAddSpotPoint',function(){
+				$(this).find('#txtLatitudeLongitude').val('');
+		});
+		</script>
+	</head>
+    <body onload="ini();">
+		<!--首頁-->
+		<div data-role="page" id="index">
+			<div data-role="header" data-theme="f">
+				    <div class="ui-btn-left" data-role="controlgroup" data-type="horizontal">
+				<a data-icon="add" data-role="button" data-theme="a" data-transition="pop" data-position-to="window" href="#popupAddAreaPoint" data-inline="true">新增區域點</a>
+				<a data-icon="add" data-role="button"  data-theme="e" data-transition="pop" data-position-to="window" href="#popupAddSpotPoint" data-inline="true">新增判斷點</a>
+				    </div>
+                <h1>PNPolygon 測試</h1>
+                <div data-role="controlgroup" class="ui-btn-right" data-type="horizontal">
+                <button onclick="refresh();">更新</button>
+				</div>
+            </div>
+			<div data-role="content">
+			<div>
+			 	<div class="ui-grid-b">
+				    <div class="ui-block-a" >    Lat:<input type="text" id="txtLat"></text></div>
+				    <div class="ui-block-b" >   Long:<input type="text" id="txtLong"></text></div>
+				    <div class="ui-block-c" >onclick:<input type="text" id="txtLatLongOnClicked"></text></div>
+				</div>
+				<div id="map_canvas">
+			 	</div>
+			 	<div class="ui-grid-a">
+				    <div class="ui-block-a" ><ul id="areaList" data-inset="true" data-role="listview"></ul></div>
+				    <div class="ui-block-b" ><ul id="spotList" data-inset="true" data-role="listview"></ul></div>
+				</div>
+			</div>
+			</div>
+		</div>
+		<!--popup-->
+	    <div data-role="popup" id="popupAddAreaPoint" data-theme="a" class="ui-corner-all">
+	        <form>
+				<div style="padding:10px 20px;">
+				  <h3>add area pologon point(新增區域點)</h3>
+				  <input type="text" id="txtLatitudeLongitude" value=""  placeholder="latitude(緯度),longitude(經度)" data-theme="a">
+				<div class="ui-grid-a">
+					<div class="ui-block-a" ><button id="btnAddArea" data-theme="f" data-icon="check">add</button></div>
+					<div class="ui-block-b" ><a data-theme="b" data-role="button" data-icon="back" data-rel="back">cancel</a></div>
+				</div>
+				</div>
+	        </form>
+	    </div>
+	    <div data-role="popup" id="popupAddSpotPoint" data-theme="a" class="ui-corner-all">
+	        <form>
+				<div style="padding:10px 20px;">
+				  <h3>add spot point(新增判斷點)</h3>
+				  <input type="text" id="txtLatitudeLongitude" value=""  placeholder="latitude(緯度),longitude(經度)" data-theme="a">
+				<div class="ui-grid-a">
+					<div class="ui-block-a" ><button id="btnAddSpot" data-theme="f" data-icon="check">add</button></div>
+					<div class="ui-block-b" ><a data-theme="b" data-role="button" data-icon="back" data-rel="back">cancel</a></div>
+				</div>
+				</div>
+	        </form>
+	    </div>
+	</body>
+	<script type="text/javascript">
+			var div_Area=$('#popupAddAreaPoint');
+			var div_Spot=$('#popupAddSpotPoint');
+			$(div_Area).on('click','#btnAddArea',function(){
+				var values=$(div_Area).find('#txtLatitudeLongitude').val().split(',');
+				var areaPoint=new Point(values[0],values[1]);
+				insertPoint(areaPoint,"area");
+				refresh();
+			});
+			$(div_Spot).on('click','#btnAddSpot',function(){
+				var values=$(div_Spot).find('#txtLatitudeLongitude').val().split(',');
+				var spotPoint=new Point(values[0],values[1]);
+				insertPoint(spotPoint,"spot");
+				refresh();
+			});
+	</script>
+</html>
